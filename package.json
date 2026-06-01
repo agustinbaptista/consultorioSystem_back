@@ -1,0 +1,33 @@
+{
+  "name": "consultorio-backend",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "api-gateway",
+    "auth-service",
+    "employees-service",
+    "patients-service",
+    "appointments-service"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "build:shared": "npm run build -w @consultorio/shared",
+    "db:init": "ts-node --project scripts/tsconfig.json scripts/bootstrap-database.ts",
+    "start:gateway": "npm run start:dev -w api-gateway",
+    "start:auth": "npm run start:dev -w auth-service",
+    "start:employees": "npm run start:dev -w employees-service",
+    "start:patients": "npm run start:dev -w patients-service",
+    "start:appointments": "npm run start:dev -w appointments-service",
+    "start:all": "npm run db:init && concurrently -n gw,auth,emp,pat,apt \"npm run start:gateway\" \"npm run start:auth\" \"npm run start:employees\" \"npm run start:patients\" \"npm run start:appointments\"",
+    "start:all:watch": "concurrently -n gw,auth,emp,pat,apt \"npm run start:gateway\" \"npm run start:auth\" \"npm run start:employees\" \"npm run start:patients\" \"npm run start:appointments\"",
+    "start:dev:all": "concurrently -n gw,auth,emp,pat,apt,pro \"npm run start:gateway\" \"npm run start:auth\" \"npm run start:employees\" \"npm run start:patients\" \"npm run start:appointments\" \"powershell -NoProfile -ExecutionPolicy Bypass -Command \\\"cd professionals-service; if (!(Test-Path .venv)) { python -m venv .venv }; .\\\\.venv\\\\Scripts\\\\python.exe -m pip install -r requirements.txt; .\\\\.venv\\\\Scripts\\\\python.exe -m uvicorn app.main:app --reload --port 8000\\\"\"",
+    "start:professionals": "cd professionals-service && uvicorn app.main:app --reload --port 8000"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "concurrently": "^9.1.2",
+    "dotenv": "^16.4.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}
