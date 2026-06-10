@@ -1,7 +1,5 @@
 # Backend — Consultorio System
 
-Microservicios según SDD en `../docs/backend/`.
-
 ## Servicios
 
 | Servicio | Puerto | Stack |
