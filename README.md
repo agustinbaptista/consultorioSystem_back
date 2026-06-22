@@ -1,121 +1,90 @@
-# Backend — Consultorio System
+# Consultorio System — Backend (Microservicios)
 
-## Servicios
+Este repositorio contiene el backend del proyecto Consultorio System, organizado como un monorepo de microservicios. 
 
-| Servicio | Puerto | Stack |
-|----------|--------|-------|
-| api-gateway | 3000 | NestJS |
-| auth-service | 3001 | NestJS |
-| employees-service | 3002 | NestJS |
-| patients-service | 3003 | NestJS |
-| appointments-service | 3004 | NestJS |
-| professionals-service | 8000 | FastAPI |
+## Resumen ejecutivo (para portfolio)
+
+- Arquitectura: monorepo con múltiples microservicios desacoplados y un `api-gateway` que unifica las APIs.
+- Tecnologías principales: **NestJS** (API gateway y servicios en Node), **FastAPI** (servicio de profesionales en Python), **PostgreSQL** (base de datos principal).
+- Objetivo: administrar autenticación, empleados, pacientes, profesionales y gestión de turnos en un consultorio.
+
+## Servicios y puertos (desarrollo)
+
+| Servicio | Puerto | Tecnología |
+|---|---:|---|
+| api-gateway | 3000 | NestJS
+| auth-service | 3001 | NestJS
+| employees-service | 3002 | NestJS
+| patients-service | 3003 | NestJS
+| appointments-service | 3004 | NestJS
+| professionals-service | 8000 | FastAPI
 
 ## Requisitos
 
 - Node.js 20+
-- PostgreSQL 15+
-- Python 3.11+ (professionals-service)
+- PostgreSQL 15+ 
+- Python 3.11+ (solo para `professionals-service`)
 
-## Base de datos (Supabase)
+## Por qué se eligieron estas herramientas 
 
-La conexión usa **PostgreSQL en Supabase** vía Session pooler (puerto **5432**) con `sslmode=require`.
+- NestJS: estructura modular y patrón opinado que facilita microservicios, inyección de dependencias y pruebas; ideal para servicios REST escalables.
+- FastAPI: rendimiento y desarrollo rápido para APIs en Python; útil para cargas CPU/IO específicas o integración con bibliotecas científicas/ML si fuese necesario.
+- PostgreSQL / Supabase: robustez relacional, soporte para esquemas por servicio y conexión gestionada; Supabase facilita hosting y autenticación en proyectos prototipo.
+- Monorepo + `shared`: compartir utilidades, DTOs y tipos entre servicios reduce duplicación y mantiene consistencia en contratos API.
 
-Variable unificada en cada servicio:
+## Inicialización de la base de datos
 
-```env
-DATABASE_URL=postgres://postgres.[PROJECT_REF]:[PASSWORD]@aws-1-us-east-1.pooler.supabase.com:5432/postgres?sslmode=require
-```
+Hay un script de inicialización `scripts/init-db.sql` que crea schemas y tablas idempotentemente y puede sembrar datos de ejemplo (incluido un usuario admin en dev).
 
-Credenciales centralizadas en `backend/.env` (copiadas también en cada microservicio).
+Variables relevantes:
 
-### Inicialización automática
+- `DATABASE_URL` — URL de conexión a PostgreSQL (se usa la misma instancia, cada servicio usa su schema)
+- `DB_AUTO_INIT` — si `true`, ejecuta `init-db.sql` al arrancar
+- `SEED_ADMIN` — si `true`, crea el usuario admin en dev
 
-Al arrancar **auth-service** (o `npm run start:all`), se ejecuta `scripts/init-db.sql`:
+## Quick start (desarrollo)
 
-- Schemas: `app_auth` (usuarios app; `auth` está reservado por Supabase), `employees`, `patients`, `appointments`, `professionals`
-- Tablas e índices (`IF NOT EXISTS`, idempotente)
-- Seed de especialidades médicas
-- Usuario admin: `admin@consultorio.com` / `Admin123!` (`SEED_ADMIN=true`)
-
-Variables:
-
-| Variable | Default | Descripción |
-|----------|---------|-------------|
-| `DB_AUTO_INIT` | `true` | Ejecutar `init-db.sql` al inicio |
-| `SEED_ADMIN` | `true` | Crear admin si no existe |
-
-Manual (opcional): `npm run db:init` desde `backend/`.
-
-`professionals-service` también llama al init si el schema `auth` no existe (por si arranca solo).
-
-> Para migraciones pesadas preferí la conexión **Session** (:5432), no Transaction pooler (:6543).
-
-## Instalación
+1. Instalar dependencias generales:
 
 ```bash
-cd backend
+cd backend_microservicios
 npm install
-npm run build:shared
 ```
 
-Copiar `.env.example` a `.env` en cada servicio (o usar variables unificadas).
-
-### Auth service
+2. Copiar archivos de entorno (`.env.example` → `.env`) según cada servicio:
 
 ```bash
-cp auth-service/.env.example auth-service/.env
+cp .env.example .env
+# o copiar el .env.example dentro de cada subcarpeta de servicio
 ```
 
-### Professionals (Python)
+3. Ejecutar servicios Nest (ejemplo):
+
+```bash
+npm run start:all
+```
+
+4. Ejecutar `professionals-service` (Python):
 
 ```bash
 cd professionals-service
 python -m venv .venv
 .venv\Scripts\activate   # Windows
 pip install -r requirements.txt
-cp .env.example .env
 uvicorn app.main:app --reload --port 8000
 ```
 
-## Ejecutar (desarrollo)
+Nota: algunos scripts asumen variables de entorno y la base de datos disponible.
 
-Terminal 1–5 (Nest):
+## Endpoints útiles
 
-```bash
-npm run start:auth
-npm run start:employees
-npm run start:patients
-npm run start:appointments
-npm run start:gateway
-```
+- `POST /api/v1/auth/login` — autenticación (usar credenciales seed en dev)
+- `GET /api/v1/health` — health check del gateway
 
-O con concurrently (sin professionals):
-
-```bash
-npm run start:all
-```
-
-Terminal 6: `uvicorn app.main:app --reload --port 8000` en `professionals-service`.
-
-## API pública
-
-- Base: `http://localhost:3000/api/v1`
-- Login: `POST /auth/login`  
-  Body: `{ "email": "admin@consultorio.com", "password": "Admin123!" }`  
-  (requiere `SEED_ADMIN=true` en auth-service)
-- Health: `GET /api/v1/health`
-
-## Variables compartidas
-
-- `JWT_SECRET` — gateway + auth
-- `INTERNAL_API_KEY` — comunicación entre microservicios
-- `DATABASE_URL` — misma instancia PostgreSQL, schemas por servicio
-
-## Estructura
+## Estructura del monorepo
 
 ```
-backend/
+backend_microservicios/
 ├── api-gateway/
 ├── auth-service/
 ├── employees-service/
@@ -125,3 +94,4 @@ backend/
 ├── shared/
 └── scripts/init-db.sql
 ```
+
