@@ -2,12 +2,6 @@
 
 Este repositorio contiene el backend del proyecto Consultorio System, organizado como un monorepo de microservicios. 
 
-## Resumen ejecutivo (para portfolio)
-
-- Arquitectura: monorepo con múltiples microservicios desacoplados y un `api-gateway` que unifica las APIs.
-- Tecnologías principales: **NestJS** (API gateway y servicios en Node), **FastAPI** (servicio de profesionales en Python), **PostgreSQL** (base de datos principal).
-- Objetivo: administrar autenticación, empleados, pacientes, profesionales y gestión de turnos en un consultorio.
-
 ## Servicios y puertos (desarrollo)
 
 | Servicio | Puerto | Tecnología |
